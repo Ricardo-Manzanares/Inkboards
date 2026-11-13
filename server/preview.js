@@ -167,6 +167,39 @@ const network = {
 };
 sample.network = network;
 
+// Cloudflare de ejemplo: dominios e IPs reservados para documentación (RFC 2606 y RFC 5737).
+const wave = (n, base, peak) => Array.from({ length: n }, (_, i) => Math.round(base + ((i * 7919) % 13) * (peak / 13) * (i % 9 === 0 ? 4 : 1)));
+const cfRange = (key, scale, step, n) => ({
+  start: h((n * step) / 3600),
+  end: h(0),
+  partial: false,
+  step,
+  totals: { requests: 702 * scale, bytes: 7.71 * 1024 ** 2 * scale, visits: 131 * scale, cacheHits: 44 * scale },
+  previous: { requests: 1100 * scale, bytes: 9.9 * 1024 ** 2 * scale, visits: 32 * scale },
+  series: wave(n, 2, 30),
+  statusClass: { '2xx': 334 * scale, '3xx': 100 * scale, '4xx': 268 * scale, '5xx': 0 },
+  statuses: [[200, 334], [403, 255], [308, 84], [302, 13], [404, 8], [499, 5]].map(([k, c]) => ({ key: k, count: c * scale })),
+  cache: [['dynamic', 322], ['none', 260], ['miss', 54], ['hit', 41], ['bypass', 12]].map(([k, c]) => ({ key: k, count: c * scale })),
+  paths: [['/', 54], ['/api/webhooks/cms', 20], ['/api/noticias/widgets', 17], ['/api/noticias', 17], ['/favicon.ico', 9], ['/.git/description', 8]].map(([k, c]) => ({ key: k, count: c * scale })),
+  countries: [['Bélgica', 372], ['Estados Unidos', 110], ['Alemania', 96], ['China', 58], ['España', 30]].map(([k, c]) => ({ key: k, count: c * scale })),
+  ips: [['203.0.113.77', 372], ['198.51.100.192', 36], ['192.0.2.2', 30], ['203.0.113.136', 25], ['198.51.100.153', 24]].map(([k, c]) => ({ key: k, count: c * scale })),
+  hosts: [['www.example.com', 459], ['example.com', 186], ['cms.example.com', 31], ['cdn.example.com', 22]].map(([k, c]) => ({ key: k, count: c * scale })),
+  browsers: [['Unknown', 577], ['Chrome', 61], ['GoogleBot', 44], ['MobileSafari', 11], ['BingBot', 9]].map(([k, c]) => ({ key: k, count: c * scale })),
+  os: [['Unknown', 591], ['Windows', 61], ['Android', 39], ['iOS', 11]].map(([k, c]) => ({ key: k, count: c * scale })),
+  security: {
+    blocked: 12 * scale,
+    actions: [{ key: 'managedChallenge', count: 12 * scale }],
+    forbidden: 255 * scale,
+    bots: 53 * scale,
+    unknownBrowser: 577 * scale,
+    probes: 38 * scale,
+    probePaths: [['/.git/description', 8], ['/wp-includes/wlwmanifest.xml', 5], ['/xmlrpc.php', 5]].map(([k, c]) => ({ key: k, count: c * scale })),
+  },
+  fetchedAt: h(0.05),
+});
+const cfZone = (name, f) => ({ name, ranges: { '6h': cfRange('6h', f, 300, 72), '24h': cfRange('24h', f * 3, 900, 96), '7d': cfRange('7d', f * 15, 3600, 168) } });
+sample.cloudflare = { updatedAt: h(0.05), data: { zones: [cfZone('example.com', 1), cfZone('example.org', 0.27)], ranges: [] } };
+
 const file = process.argv[2];
 const state = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : sample;
 fs.mkdirSync('out', { recursive: true });
@@ -175,7 +208,7 @@ for (let page = 0; page < PAGE_COUNT; page++) {
   fs.writeFileSync(out, await renderPng(state, { battery: 87, charging: true, page }));
   console.log(out);
 }
-for (const view of Object.keys(DETAILS)) {
+for (const view of [...Object.keys(DETAILS), 'cloudflare-1-7d']) {
   fs.writeFileSync(`out/detail-${view}.png`, await renderPng(state, { battery: 87, charging: true, view }));
   console.log(`out/detail-${view}.png`);
 }
@@ -191,7 +224,12 @@ for (const [theme, page] of [['dark', 0], ['light', 0], ['dark', 1]]) {
 }
 
 // Comprobación del mapa de toques: el centro de cada tarjeta abre su detalle y la X lo cierra.
-const taps = { claude: [300, 300], immich: [270, 620], railway: [800, 620], gsc: [536, 950], github: [270, 1280], billing: [800, 1280], nada: [536, 60] };
+const taps = { claude: [300, 300], immich: [270, 620], railway: [800, 620], cloudflare: [536, 950], github: [270, 1280], billing: [800, 1280], nada: [536, 60] };
 console.log(`toque red (pantalla 2) -> ${(await viewAfterTap(state, { page: 1 }, 536, 800)) || 'grid'}`);
 for (const [name, [x, y]] of Object.entries(taps)) console.log(`toque ${name} -> ${(await viewAfterTap(state, { page: 0 }, x, y)) || 'grid'}`);
 console.log(`X en detalle -> ${(await viewAfterTap(state, { page: 0, view: 'gsc' }, 1000, 190)) || 'grid'}`);
+
+// Detalle de Cloudflare: los botones de dominio y de rango cambian la vista.
+for (const [name, [x, y]] of Object.entries({ 'dominio 2': [420, 250], 'rango 24 h': [890, 250] })) {
+  console.log(`toque ${name} -> ${(await viewAfterTap(state, { page: 0, view: 'cloudflare' }, x, y)) || 'grid'}`);
+}

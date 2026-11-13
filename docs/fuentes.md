@@ -41,6 +41,39 @@ Si el log dice `User does not have sufficient permission for site`, la clave es 
 `GSC_SITE_URL` no coincide con el tipo de propiedad. Se actualiza cada 6 h (`GSC_EVERY_MIN=360`) y los datos van
 unos 2 días por detrás.
 
+## Cloudflare
+
+Para los dominios cuyo tráfico pasa por el proxy de Cloudflare (nube naranja). La tarjeta muestra una fila por
+dominio con las últimas 6 h frente a las 6 h anteriores: solicitudes, visitas, datos, porcentaje de caché y el
+tráfico bloqueado o automatizado. Al pulsarla se abre el detalle, con botones para cambiar de **dominio** y de
+**rango** (6 h, 24 h o 7 d): serie de solicitudes, rutas, países, IPs, hosts, códigos de estado y caché. Los
+datos llegan con 1 a 3 minutos de retraso, casi en vivo.
+
+1. En [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens):
+   **Create Token → Custom token** con los permisos **Zone → Analytics → Read** y **Zone → Zone → Read**, y en
+   **Zone Resources** solo las zonas que quieras ver.
+2. En `.env` (o en las variables de Railway):
+   - `CF_API_TOKEN=` con el token.
+   - `CF_ZONES=example.com,example.org`: los dominios, separados por comas. Para añadir uno más basta con
+     sumarlo a la lista (y a las zonas del token). Si prefieres no dar **Zone → Zone → Read**, pon el id de
+     cada zona (pestaña **Overview** del dominio, abajo a la derecha): `CF_ZONES=example.com=0123abcd…`.
+3. Reinicia el servidor y busca `[cloudflare] ok` en el log.
+
+6 h y 24 h se consultan cada 5 min (`CF_EVERY_MIN`); 7 d, que apenas cambia en ese tiempo, cada 30 min
+(`CF_WEEK_EVERY_MIN`). La API es la GraphQL Analytics de Cloudflare (dataset `httpRequestsAdaptiveGroups`). Si
+el plan no guarda tanta historia como pide un rango, el detalle lo indica con "desde … (límite del plan)" y la
+comparación con el periodo anterior desaparece. En el plan Free los números se estiman a partir de una muestra
+cuando el tráfico es alto, así que pueden diferir algo de los del panel.
+
+En **Tráfico bloqueado / bots**:
+
+- **Bloqueado por Cloudflare**: peticiones bloqueadas o desafiadas por las reglas de seguridad o Bot Fight Mode.
+- **Sondeos**: peticiones a rutas típicas de escaneo de vulnerabilidades (`wp-admin`, `xmlrpc.php`, `.env`,
+  `.git`…). Si alguna de esas rutas es legítima en tu web, cámbialo con `CF_PROBE_PATTERN` (expresión regular).
+- **403 Forbidden**: respuestas 403, las dé Cloudflare o tu servidor.
+- **Bots declarados**: navegador identificado como bot (Googlebot, Bingbot…). "Sin navegador" son las peticiones
+  sin navegador reconocible: scripts, APIs, el propio servidor de tu web pidiendo datos a otro subdominio…
+
 ## Gasto de Google Cloud
 
 La API de Cloud Billing no da el gasto, así que se lee de la **exportación de facturación a BigQuery**. Vale la

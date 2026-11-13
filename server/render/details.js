@@ -7,6 +7,7 @@ import { C, div, row, col, text, icon, badge, chip, stat, bar, sparkline, column
 import { num, compact, usd, money, pct, bytes, delta, when, ago, shortDate, truncate } from './format.js';
 import { fresh, errorLine, heatmap, MONTH_NAMES } from './cards.js';
 import { networkList } from './network.js';
+import { cloudflareDetail } from './cloudflare.js';
 
 const W = 964; // ancho útil de la tarjeta de detalle
 
@@ -415,4 +416,7 @@ function billing(src) {
 // --- Red local ---
 const network = (src) => networkList(src, { detail, label, W });
 
-export const DETAILS = { claude, immich, railway, gsc, github, billing, network };
+// --- Cloudflare --- (recibe también la vista, que dice qué dominio y rango se ven)
+const cloudflare = (src, view) => cloudflareDetail(src, view, { detail, label, W });
+
+export const DETAILS = { claude, immich, railway, gsc, github, billing, network, cloudflare };

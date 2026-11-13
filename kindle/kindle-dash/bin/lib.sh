@@ -130,7 +130,7 @@ draw_now() {
   code=$(fetch "$url" "$IMG.tmp")
   if [ "$code" = "200" ] && [ -s "$IMG.tmp" ]; then
     mv "$IMG.tmp" "$IMG"
-    v=$(sed -n 's/^[Xx]-[Vv]iew: *\([a-z]*\).*/\1/p' "$IMG.hdr" 2>/dev/null)
+    v=$(sed -n 's/^[Xx]-[Vv]iew: *\([a-z0-9-]*\).*/\1/p' "$IMG.hdr" 2>/dev/null)
     case "$v" in
       grid) rm -f "$VIEW" ;;
       ?*) echo "$v" > "$VIEW" ;;
@@ -148,7 +148,8 @@ draw_now() {
     401) reason="Clave del dashboard no válida (401)" ;;
     *) reason="El servidor respondió con error $code" ;;
   esac
-  log "fallo ($code) al descargar $DASH_URL"
+  # Sin la query: lleva la clave del dashboard y el log no debe guardarla.
+  log "fallo ($code) al descargar ${DASH_URL%%\?*}"
   touch "$OFFLINE"
   offline_screen "$reason"
   return 1

@@ -8,6 +8,7 @@ import { collectGithub } from './collectors/github.js';
 import { collectGsc } from './collectors/gsc.js';
 import { collectRailway } from './collectors/railway.js';
 import { collectBilling } from './collectors/billing.js';
+import { collectCloudflare } from './collectors/cloudflare.js';
 
 load();
 
@@ -16,6 +17,7 @@ const collectors = [
   { name: 'github', run: collectGithub, everyMin: config.github.everyMin, enabled: config.github.token },
   { name: 'gsc', run: collectGsc, everyMin: config.gsc.everyMin, enabled: config.gsc.siteUrl && config.google.credentials },
   { name: 'billing', run: collectBilling, everyMin: config.billing.everyMin, enabled: config.billing.table && config.billing.projectIds.length && config.google.credentials },
+  { name: 'cloudflare', run: collectCloudflare, everyMin: config.cloudflare.everyMin, enabled: config.cloudflare.token && config.cloudflare.zones.length },
   { name: 'railway', run: collectRailway, everyMin: config.railway.everyMin, enabled: config.railway.token },
 ];
 

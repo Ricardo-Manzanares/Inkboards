@@ -69,18 +69,30 @@ blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--acce
   <main><article>
 <h1 id="inkboard">Inkboard</h1>
 <p>Dashboard con estilo de tinta electrónica para un Kindle con jailbreak, el navegador y el escritorio de Windows
-(Rainmeter): límites y tokens de Claude Code, Immich, Railway, Search Console, GitHub, gasto de Google Cloud, un
+(Rainmeter): límites y tokens de Claude Code, Immich, Railway, tráfico de Cloudflare, Search Console, GitHub, gasto de Google Cloud, un
 mapa de los dispositivos de la red local y la telemetría del PC.</p>
 <table>
 <thead>
 <tr>
-<th>Pantalla 1: métricas</th>
+<th>Pantalla 1: métricas con Google Search Console</th>
+<th>Pantalla 1: métricas con telemetría de Cloudflare</th>
+<th>Detalle de Cloudflare por dominio y rango</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><img src="docs/capturas/pantalla-1.png" alt="Tarjetas de Claude Code, Immich, Railway, Search Console, GitHub y Google Cloud"></td>
+<td><img src="docs/capturas/pantalla-1-cloudflare.png" alt="Tarjetas de Claude Code, Immich, Railway, Cloudflare, GitHub y Google Cloud"></td>
+<td><img src="docs/capturas/detalle-cloudflare.png" alt="Detalle de Cloudflare: solicitudes, visitas, tráfico bloqueado y bots, rutas, países, IPs y hosts"></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
 <th>Pantalla 2: red local</th>
 <th>Detalle de la red</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><img src="docs/capturas/pantalla-1.png" alt="Tarjetas de Claude Code, Immich, Railway, Search Console, GitHub y Google Cloud"></td>
 <td><img src="docs/capturas/pantalla-2-red.png" alt="Diagrama radial de la red local"></td>
 <td><img src="docs/capturas/detalle-red.png" alt="Lista de equipos con IP, conexión y tiempo conectado"></td>
 </tr>
@@ -99,7 +111,7 @@ mapa de los dispositivos de la red local y la telemetría del PC.</p>
 <td><img src="docs/capturas/widget.png" alt="Widget de Rainmeter con las métricas, fondo transparente"></td>
 </tr>
 </tbody></table>
-<p>Capturas generadas con <code>npm run preview</code> y datos de ejemplo, salvo la de telemetría, que es del widget real.</p>
+<p>Capturas generadas con <code>npm run preview</code> y datos de ejemplo (dominios <code>example.com</code> e IPs de documentación), salvo la de telemetría, que es del widget real. La tarjeta de Search Console y la de Cloudflare ocupan el mismo hueco: se elige cuál mostrar en <code>server/render/render.js</code>.</p>
 <h2 id="qué-hace">Qué hace</h2>
 <ul>
 <li><strong>Tarjetas</strong> con lo que importa de cada servicio; al tocar una se abre su <strong>detalle</strong> a pantalla completa.</li>
@@ -117,7 +129,7 @@ para arreglarlo.</li>
 <h2 id="cómo-funciona">Cómo funciona</h2>
 <pre><code>PC (cuando está encendido)              Servidor (Railway o el propio PC)           Kindle
 agent/agent.mjs  ──POST /api/ingest──▶  server/index.js ── data/state.json
- · límites y tokens de Claude Code       · GitHub, Search Console, Railway,
+ · límites y tokens de Claude Code       · GitHub, Cloudflare, Search Console, Railway,
  · Immich                                  gasto de Google Cloud (cada N min)
  · dispositivos de la red local          · GET /dash.png  ◀──────── cada 5 min ──── eips
                                          · GET /web, /widget.png
@@ -153,7 +165,7 @@ npm run preview                      # genera out/preview*.png con datos de ejem
 </tr>
 <tr>
 <td><a href="docs/fuentes.html">Fuentes de datos</a></td>
-<td>GitHub, Search Console, gasto de Google Cloud y Railway</td>
+<td>GitHub, Search Console, Cloudflare, gasto de Google Cloud y Railway</td>
 </tr>
 <tr>
 <td><a href="docs/agente.html">Agente del PC</a></td>
@@ -174,7 +186,7 @@ npm run preview                      # genera out/preview*.png con datos de ejem
 </tbody></table>
 <h2 id="estructura">Estructura</h2>
 <pre><code>server/          servidor HTTP: recogida de las fuentes en la nube, estado y render
-  collectors/    GitHub, Search Console, Railway y facturación de Google Cloud
+  collectors/    GitHub, Search Console, Cloudflare, Railway y facturación de Google Cloud
   render/        tarjetas, detalles, diagrama de red y primitivas de UI para satori
 agent/           agente del PC (Claude Code, Immich, red local) y su tarea programada
 kindle/          extensión KUAL: bucle de descarga, gestos y pantalla de error

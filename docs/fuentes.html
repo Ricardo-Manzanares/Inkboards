@@ -106,6 +106,39 @@ línea: <code>[Convert]::ToBase64String([IO.File]::ReadAllBytes(&quot;clave.json
 <p>Si el log dice <code>User does not have sufficient permission for site</code>, la clave es válida pero falta el paso 4 o
 <code>GSC_SITE_URL</code> no coincide con el tipo de propiedad. Se actualiza cada 6 h (<code>GSC_EVERY_MIN=360</code>) y los datos van
 unos 2 días por detrás.</p>
+<h2 id="cloudflare">Cloudflare</h2>
+<p>Para los dominios cuyo tráfico pasa por el proxy de Cloudflare (nube naranja). La tarjeta muestra una fila por
+dominio con las últimas 6 h frente a las 6 h anteriores: solicitudes, visitas, datos, porcentaje de caché y el
+tráfico bloqueado o automatizado. Al pulsarla se abre el detalle, con botones para cambiar de <strong>dominio</strong> y de
+<strong>rango</strong> (6 h, 24 h o 7 d): serie de solicitudes, rutas, países, IPs, hosts, códigos de estado y caché. Los
+datos llegan con 1 a 3 minutos de retraso, casi en vivo.</p>
+<ol>
+<li>En <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">dash.cloudflare.com/profile/api-tokens</a>:
+<strong>Create Token → Custom token</strong> con los permisos <strong>Zone → Analytics → Read</strong> y <strong>Zone → Zone → Read</strong>, y en
+<strong>Zone Resources</strong> solo las zonas que quieras ver.</li>
+<li>En <code>.env</code> (o en las variables de Railway):<ul>
+<li><code>CF_API_TOKEN=</code> con el token.</li>
+<li><code>CF_ZONES=example.com,example.org</code>: los dominios, separados por comas. Para añadir uno más basta con
+sumarlo a la lista (y a las zonas del token). Si prefieres no dar <strong>Zone → Zone → Read</strong>, pon el id de
+cada zona (pestaña <strong>Overview</strong> del dominio, abajo a la derecha): <code>CF_ZONES=example.com=0123abcd…</code>.</li>
+</ul>
+</li>
+<li>Reinicia el servidor y busca <code>[cloudflare] ok</code> en el log.</li>
+</ol>
+<p>6 h y 24 h se consultan cada 5 min (<code>CF_EVERY_MIN</code>); 7 d, que apenas cambia en ese tiempo, cada 30 min
+(<code>CF_WEEK_EVERY_MIN</code>). La API es la GraphQL Analytics de Cloudflare (dataset <code>httpRequestsAdaptiveGroups</code>). Si
+el plan no guarda tanta historia como pide un rango, el detalle lo indica con &quot;desde … (límite del plan)&quot; y la
+comparación con el periodo anterior desaparece. En el plan Free los números se estiman a partir de una muestra
+cuando el tráfico es alto, así que pueden diferir algo de los del panel.</p>
+<p>En <strong>Tráfico bloqueado / bots</strong>:</p>
+<ul>
+<li><strong>Bloqueado por Cloudflare</strong>: peticiones bloqueadas o desafiadas por las reglas de seguridad o Bot Fight Mode.</li>
+<li><strong>Sondeos</strong>: peticiones a rutas típicas de escaneo de vulnerabilidades (<code>wp-admin</code>, <code>xmlrpc.php</code>, <code>.env</code>,
+<code>.git</code>…). Si alguna de esas rutas es legítima en tu web, cámbialo con <code>CF_PROBE_PATTERN</code> (expresión regular).</li>
+<li><strong>403 Forbidden</strong>: respuestas 403, las dé Cloudflare o tu servidor.</li>
+<li><strong>Bots declarados</strong>: navegador identificado como bot (Googlebot, Bingbot…). &quot;Sin navegador&quot; son las peticiones
+sin navegador reconocible: scripts, APIs, el propio servidor de tu web pidiendo datos a otro subdominio…</li>
+</ul>
 <h2 id="gasto-de-google-cloud">Gasto de Google Cloud</h2>
 <p>La API de Cloud Billing no da el gasto, así que se lee de la <strong>exportación de facturación a BigQuery</strong>. Vale la
 misma cuenta de servicio de Search Console; solo necesita permisos de BigQuery.</p>

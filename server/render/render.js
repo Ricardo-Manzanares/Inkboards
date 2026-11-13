@@ -3,9 +3,10 @@ import { createRequire } from 'node:module';
 import satori from 'satori';
 import sharp from 'sharp';
 import { C, col, row, div, text, hitmap, hitValue, withTheme, THEMES } from './ui.js';
-import { header, claudeCard, immichCard, railwayCard, gscCard, githubCard, billingCard } from './cards.js';
+import { header, claudeCard, immichCard, railwayCard, githubCard, billingCard } from './cards.js';
 import { DETAILS } from './details.js';
 import { networkCard } from './network.js';
+import { cloudflareCard } from './cloudflare.js';
 
 // Las imágenes se piden de una en una y cada pocos minutos: sin la caché de libvips ni un hilo por núcleo
 // la memoria baja mucho y el tiempo de render apenas cambia.
@@ -30,7 +31,8 @@ const PAGES = [
   (state) => [
     claudeCard(state.claude),
     row({ gap: 20, alignItems: 'stretch' }, immichCard(state.immich), railwayCard(state.railway)),
-    gscCard(state.gsc),
+    // La tarjeta de Search Console (gscCard) sigue disponible: basta ponerla aquí en lugar de esta.
+    cloudflareCard(state.cloudflare),
     row({ gap: 20, alignItems: 'stretch' }, githubCard(state.github), billingCard(state.billing)),
   ],
   (state) => [networkCard(state.network)],
@@ -49,19 +51,22 @@ const backHint = () =>
     text('Desliza hacia arriba desde abajo o pulsa la X para volver', { fontSize: 20, color: C.dim }),
   );
 
-export const isView = (v) => Object.hasOwn(DETAILS, v);
+// Una vista es el id de un detalle, con parámetros opcionales separados por guiones (cloudflare-1-24h).
+// Solo minúsculas, cifras y guiones: viaja en la URL y en la cabecera X-View, y así la lee el Kindle.
+const viewBase = (v) => String(v).split('-')[0];
+export const isView = (v) => typeof v === 'string' && /^[a-z]+(-[a-z0-9]+)*$/.test(v) && v.length <= 40 && Object.hasOwn(DETAILS, viewBase(v));
 
 // El widget sin cabecera (la hora ya está en Windows) no tiene alto fijo: ocupa lo que ocupen las tarjetas.
 const autoHeight = (opts) => opts.widget && !opts.header;
 
 function layout(state, opts) {
-  const detail = isView(opts.view) && DETAILS[opts.view];
+  const base = isView(opts.view) && viewBase(opts.view);
   return col(
     {
       width: WIDTH,
       ...(autoHeight(opts) ? {} : { height: HEIGHT }),
       background: C.page,
-      padding: opts.widget ? '6px 22px 8px' : detail ? '16px 22px 34px' : '16px 22px 20px',
+      padding: opts.widget ? '6px 22px 8px' : base ? '16px 22px 34px' : '16px 22px 20px',
       gap: 12,
       boxSizing: 'border-box',
       fontFamily: 'Inter',
@@ -70,9 +75,9 @@ function layout(state, opts) {
     // En el widget la cabecera, si se pide, va en su propia tarjeta para leerse sobre cualquier fondo de escritorio.
     opts.widget
       ? opts.header && col({ background: C.card, borderRadius: 26, padding: '8px 14px 10px' }, header(opts))
-      : header(opts, !detail && PAGE_COUNT > 1 && dots(opts.page)),
-    detail ? detail(state[opts.view]) : PAGES[opts.page](state),
-    detail && backHint(),
+      : header(opts, !base && PAGE_COUNT > 1 && dots(opts.page)),
+    base ? DETAILS[base](state[base], opts.view) : PAGES[opts.page](state),
+    base && backHint(),
   );
 }
 
@@ -125,6 +130,8 @@ export async function viewAfterTap(state, opts, x, y) {
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (at(x + dx, y + dy) !== v) return opts.view || '';
   const id = ids.find((_, i) => hitValue(i) === v);
   if (id === 'close') return '';
+  // Botones dentro de un detalle (dominio, rango…): su id es "go:" y la vista a la que llevan.
+  if (id?.startsWith('go:') && isView(id.slice(3))) return id.slice(3);
   if (opts.view) return opts.view;
   return isView(id) ? id : '';
 }

@@ -38,6 +38,18 @@ export const config = {
     location: env.GCP_BILLING_LOCATION || '',
     everyMin: num(env.GCP_BILLING_EVERY_MIN, 180),
   },
+  // Tráfico de Cloudflare: "dominio" o "dominio=zoneId", separados por comas.
+  cloudflare: {
+    token: env.CF_API_TOKEN || '',
+    zones: list(env.CF_ZONES),
+    everyMin: num(env.CF_EVERY_MIN, 5),
+    // El rango de 7 días cambia poco: se vuelve a pedir como mucho cada tantos minutos.
+    weekEveryMin: num(env.CF_WEEK_EVERY_MIN, 30),
+    // Rutas que cuentan como sondeo de vulnerabilidades (expresión regular, sin distinguir mayúsculas).
+    probePattern:
+      env.CF_PROBE_PATTERN ||
+      String.raw`wp-(admin|includes|content|login|config)|xmlrpc\.php|/\.(env|git|aws|ssh|svn|ds_store|htaccess)|phpmyadmin|cgi-bin|/vendor/phpunit|\.(bak|sql|old|swp)$`,
+  },
   railway: {
     token: env.RAILWAY_API_TOKEN || '',
     workspaceId: env.RAILWAY_WORKSPACE_ID || '',

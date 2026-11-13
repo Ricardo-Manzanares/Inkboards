@@ -1,18 +1,22 @@
 # Inkboard
 
 Dashboard con estilo de tinta electrónica para un Kindle con jailbreak, el navegador y el escritorio de Windows
-(Rainmeter): límites y tokens de Claude Code, Immich, Railway, Search Console, GitHub, gasto de Google Cloud, un
+(Rainmeter): límites y tokens de Claude Code, Immich, Railway, tráfico de Cloudflare, Search Console, GitHub, gasto de Google Cloud, un
 mapa de los dispositivos de la red local y la telemetría del PC.
 
-| Pantalla 1: métricas | Pantalla 2: red local | Detalle de la red |
+| Pantalla 1: métricas con Google Search Console | Pantalla 1: métricas con telemetría de Cloudflare | Detalle de Cloudflare por dominio y rango |
 |---|---|---|
-| ![Tarjetas de Claude Code, Immich, Railway, Search Console, GitHub y Google Cloud](docs/capturas/pantalla-1.png) | ![Diagrama radial de la red local](docs/capturas/pantalla-2-red.png) | ![Lista de equipos con IP, conexión y tiempo conectado](docs/capturas/detalle-red.png) |
+| ![Tarjetas de Claude Code, Immich, Railway, Search Console, GitHub y Google Cloud](docs/capturas/pantalla-1.png) | ![Tarjetas de Claude Code, Immich, Railway, Cloudflare, GitHub y Google Cloud](docs/capturas/pantalla-1-cloudflare.png) | ![Detalle de Cloudflare: solicitudes, visitas, tráfico bloqueado y bots, rutas, países, IPs y hosts](docs/capturas/detalle-cloudflare.png) |
+
+| Pantalla 2: red local | Detalle de la red |
+|---|---|
+| ![Diagrama radial de la red local](docs/capturas/pantalla-2-red.png) | ![Lista de equipos con IP, conexión y tiempo conectado](docs/capturas/detalle-red.png) |
 
 | Escritorio: telemetría del PC | Escritorio: red local | Escritorio: métricas |
 |---|---|---|
 | ![Widget de Rainmeter con CPU, RAM, SWAP y discos](docs/capturas/widget-telemetria.png) | ![Widget de Rainmeter con la red local, fondo transparente](docs/capturas/widget-red.png) | ![Widget de Rainmeter con las métricas, fondo transparente](docs/capturas/widget.png) |
 
-Capturas generadas con `npm run preview` y datos de ejemplo, salvo la de telemetría, que es del widget real.
+Capturas generadas con `npm run preview` y datos de ejemplo (dominios `example.com` e IPs de documentación), salvo la de telemetría, que es del widget real. La tarjeta de Search Console y la de Cloudflare ocupan el mismo hueco: se elige cuál mostrar en `server/render/render.js`.
 
 ## Qué hace
 
@@ -33,7 +37,7 @@ Capturas generadas con `npm run preview` y datos de ejemplo, salvo la de telemet
 ```
 PC (cuando está encendido)              Servidor (Railway o el propio PC)           Kindle
 agent/agent.mjs  ──POST /api/ingest──▶  server/index.js ── data/state.json
- · límites y tokens de Claude Code       · GitHub, Search Console, Railway,
+ · límites y tokens de Claude Code       · GitHub, Cloudflare, Search Console, Railway,
  · Immich                                  gasto de Google Cloud (cada N min)
  · dispositivos de la red local          · GET /dash.png  ◀──────── cada 5 min ──── eips
                                          · GET /web, /widget.png
@@ -64,7 +68,7 @@ Después, cada parte tiene su guía:
 | Guía | Contenido |
 |---|---|
 | [Servidor](docs/servidor.md) | Railway o PC local, variables, página web, memoria |
-| [Fuentes de datos](docs/fuentes.md) | GitHub, Search Console, gasto de Google Cloud y Railway |
+| [Fuentes de datos](docs/fuentes.md) | GitHub, Search Console, Cloudflare, gasto de Google Cloud y Railway |
 | [Agente del PC](docs/agente.md) | Claude Code, Immich, red local y tarea programada |
 | [Red local](docs/red-local.md) | Cómo se descubren los equipos, inventario y límites |
 | [Kindle](docs/kindle.md) | Extensión KUAL, gestos, varias pantallas y detalle |
@@ -74,7 +78,7 @@ Después, cada parte tiene su guía:
 
 ```
 server/          servidor HTTP: recogida de las fuentes en la nube, estado y render
-  collectors/    GitHub, Search Console, Railway y facturación de Google Cloud
+  collectors/    GitHub, Search Console, Cloudflare, Railway y facturación de Google Cloud
   render/        tarjetas, detalles, diagrama de red y primitivas de UI para satori
 agent/           agente del PC (Claude Code, Immich, red local) y su tarea programada
 kindle/          extensión KUAL: bucle de descarga, gestos y pantalla de error

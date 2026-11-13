@@ -44,6 +44,13 @@ async function graphql(query, variables) {
   return body.data;
 }
 
+// Si la API no devuelve la zona (token sin acceso, fallo pasajero), es un error: no se guardan ceros sobre los datos buenos.
+function zoneData(data, zoneTag) {
+  const z = data?.viewer?.zones?.[0];
+  if (!z) throw new Error(`Cloudflare no devolvió datos de la zona ${zoneTag}`);
+  return z;
+}
+
 // "dominio" o "dominio=zoneId". Sin id se busca por nombre (el token necesita Zone → Zone → Read).
 const zoneIds = new Map();
 async function zoneId(entry) {
@@ -128,7 +135,7 @@ async function collectRange(zoneTag, range, lim, now) {
   const parts = [];
   for (const c of chunks(start, end, lim.maxDuration)) {
     const data = await graphql(query, { zoneTag, f: filter(c) });
-    parts.push(data.viewer.zones[0] || {});
+    parts.push(zoneData(data, zoneTag));
   }
 
   // Periodo anterior, solo si entra entero en la retención del plan.
@@ -138,7 +145,7 @@ async function collectRange(zoneTag, range, lim, now) {
     const pc = chunks(prevStart, start, lim.maxDuration);
     const vars = Object.fromEntries(pc.map((c, i) => [`f${i}`, filter(c)]));
     const data = await graphql(totalsQuery(pc.length), { zoneTag, ...vars });
-    const z = data.viewer.zones[0] || {};
+    const z = zoneData(data, zoneTag);
     previous = pc.reduce((acc, _, i) => addTotals(acc, sumRow(z[`p${i}`]?.[0])), ZERO);
   }
 

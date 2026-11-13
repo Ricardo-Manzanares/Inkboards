@@ -52,7 +52,9 @@ function cardHeader(prefix, y, icon, title, extra = []) {
 // El relleno es una píldora de ancho mínimo su alto (con valores bajos, un extremo redondeado);
 // al 0 % no se dibuja, y el alto 0,01 evita que Rainmeter descarte la forma.
 function barMeter(name, { x, y, w, h, measure, extra = [] }) {
-  const pct = `Clamp([${measure}],0,100)`;
+  // [Medida:] es el valor numérico. Con [Medida] Rainmeter pone el texto de la medida, y en UsageMonitor ese
+  // texto es el nombre de la instancia (_Total), que rompe la fórmula.
+  const pct = `Clamp([${measure}:],0,100)`;
   add(
     `[${name}]`,
     'Meter=Shape',

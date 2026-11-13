@@ -14,11 +14,11 @@ load();
 
 // Fuentes en la nube que el propio servidor consulta. Claude, Immich y la red local llegan del agente del PC por /api/ingest.
 const collectors = [
-  { name: 'github', run: collectGithub, everyMin: config.github.everyMin, enabled: config.github.token },
-  { name: 'gsc', run: collectGsc, everyMin: config.gsc.everyMin, enabled: config.gsc.siteUrl && config.google.credentials },
-  { name: 'billing', run: collectBilling, everyMin: config.billing.everyMin, enabled: config.billing.table && config.billing.projectIds.length && config.google.credentials },
-  { name: 'cloudflare', run: collectCloudflare, everyMin: config.cloudflare.everyMin, enabled: config.cloudflare.token && config.cloudflare.zones.length },
-  { name: 'railway', run: collectRailway, everyMin: config.railway.everyMin, enabled: config.railway.token },
+  { name: 'github', run: collectGithub, everyMin: config.github.everyMin, enabled: config.github.token, needs: 'GITHUB_TOKEN' },
+  { name: 'gsc', run: collectGsc, everyMin: config.gsc.everyMin, enabled: config.gsc.siteUrl && config.google.credentials, needs: 'GSC_SITE_URL y GOOGLE_SERVICE_ACCOUNT_JSON' },
+  { name: 'billing', run: collectBilling, everyMin: config.billing.everyMin, enabled: config.billing.table && config.billing.projectIds.length && config.google.credentials, needs: 'GCP_BILLING_TABLE, GCP_BILLING_PROJECT_IDS y GOOGLE_SERVICE_ACCOUNT_JSON' },
+  { name: 'cloudflare', run: collectCloudflare, everyMin: config.cloudflare.everyMin, enabled: config.cloudflare.token && config.cloudflare.zones.length, needs: 'CF_API_TOKEN y CF_ZONES' },
+  { name: 'railway', run: collectRailway, everyMin: config.railway.everyMin, enabled: config.railway.token, needs: 'RAILWAY_API_TOKEN' },
 ];
 
 async function runCollector(c) {
@@ -137,4 +137,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(config.port, () => {
   const on = collectors.filter((c) => c.enabled).map((c) => c.name);
   console.log(`inkboard en :${config.port} · colectores: ${on.join(', ') || 'ninguno'}`);
+  // Los desactivados, con la variable que falta: sin esto un colector sin configurar no deja rastro en el log.
+  for (const c of collectors.filter((c) => !c.enabled)) console.log(`[${c.name}] desactivado: falta ${c.needs}`);
 });
